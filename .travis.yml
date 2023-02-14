@@ -4,6 +4,9 @@ latex: true
 r_build_args: '--no-build-vignettes'
 r_check_args: '--ignore-vignettes'
 
+r_packages:
+  - covr
+
 addons:
   apt:
     sources:
@@ -20,3 +23,6 @@ before_install:
   - mkdir -p ~/.R/
   - echo "CXX14 = g++-7 -fPIC -flto=2" >> ~/.R/Makevars
   - echo "CXX14FLAGS = -O3" >> ~/.R/Makevars
+
+after_success:
+  - Rscript -e 'library(covr); codecov()'
