@@ -8,7 +8,6 @@ jobs:
         r-version: [3.x]
     steps:
     - name: Setup R
-      uses: actions/setup-r@v1
       with:
         r-version: ${{ matrix.r-version }}
     - name: Generate coverage report
