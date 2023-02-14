@@ -9,7 +9,6 @@ jobs:
     steps:
     - name: Generate coverage report
       run: |
-        r --no-save
-        devtools::test()
+        Rscript R CMD CHECK
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
