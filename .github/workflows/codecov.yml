@@ -9,6 +9,6 @@ jobs:
     steps:
     - name: Generate coverage report
       run: |
-      Rscript -e 'devtools::test()'
+        Rscript -e 'devtools::test()'
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
