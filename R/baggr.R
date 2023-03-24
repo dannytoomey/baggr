@@ -208,7 +208,7 @@
 baggr <- function(data,
                   model = NULL,
                   pooling = c("partial", "none", "full"),
-                  effect = NULL,
+                  label = NULL,
                   covariates = c(),
                   prior_hypermean = NULL, prior_hypersd = NULL, prior_hypercor=NULL,
                   prior_beta = NULL, prior_control = NULL, prior_control_sd = NULL,
@@ -224,6 +224,13 @@ baggr <- function(data,
   # check that it is data.frame of at least 1 row
   # if(!inherits(data, "data.frame") || nrow(data) == 1)
     # stop("data argument must be a data.frame of >1 rows")
+
+  # check if 'effect' argument was passed for compatibilty
+  # and give warning message
+  if("effect" %in% attributes(list(...))){
+    label <- list(...)$effect
+    message("The 'effect' argument has been renamed 'label'. Please use 'label' insetad of 'effect' in the future")    
+  }
 
   # Match arguments
   pooling <- match.arg(pooling)
@@ -250,7 +257,7 @@ baggr <- function(data,
 
   stan_data <- convert_inputs(data,
                               model,
-                              effect,
+                              label,
                               covariates = covariates,
                               quantiles = quantiles,
                               outcome = outcome,
@@ -266,7 +273,7 @@ baggr <- function(data,
   data <- attr(stan_data, "data")
   # Lastly, effect changes if binary data were passed
   # and effect arg was not specified
-  effect <- attr(stan_data, "effect")
+  label <- attr(stan_data, "label")
   attr(data, "outcome") <- outcome
   attr(data, "group") <- group
   attr(data, "treatment") <- treatment
@@ -278,34 +285,34 @@ baggr <- function(data,
 
 
   if(model == "quantiles"){
-    if(is.null(effect))
-      effect <- paste0(100*quantiles, "% quantile mean")
-    else if(length(effect) == 1)
-      effect <- paste0(100*quantiles, "% quantile on ", effect)
-    else if(length(length(effect) != length(quantiles)))
-      stop("For quantile models, 'effect' must be of length 1",
+    if(is.null(label))
+      label <- paste0(100*quantiles, "% quantile mean")
+    else if(length(label) == 1)
+      label <- paste0(100*quantiles, "% quantile on ", label)
+    else if(length(length(label) != length(quantiles)))
+      stop("For quantile models, 'label' must be of length 1",
            "or same as number of quantiles")
   } else if(model == "logit"){
-    if(is.null(effect))
-      effect <- "logOR"
+    if(is.null(label))
+      label <- "logOR"
   } else if(model == "sslab") {
-    if(is.null(effect))
-      effect <- c("Location of negative tail",
+    if(is.null(label))
+      label <- c("Location of negative tail",
                   "Location of positive tail",
                   "Scale of negative tail",
                   "Scale of positive tail",
                   "LogOR on being negative",
                   "LogOR on being equal to 0")
-    else if(length(effect) != 6)
-      stop("For spike & slab models, 'effect' must be of length 6")
+    else if(length(label) != 6)
+      stop("For spike & slab models, 'label' must be of length 6")
   }
   # In all other cases we set it to mean
-  if(is.null(effect))
-    effect <- "mean"
+  if(is.null(label))
+    label <- "mean"
 
   # Number of TE parameters
   # (in the future this can be built into the models):
-  n_parameters <- length(effect)
+  n_parameters <- length(label)
 
 
   # Pooling type:
@@ -351,6 +358,12 @@ baggr <- function(data,
 
   # If extracting prior from another model, we need to do a swapsie switcheroo:
   stan_args <- list(...)
+  
+  # remove 'effect' from stan_args if present
+  if("effect" %in% attributes(stan_args)){
+    stan_args$effect <- NULL
+  }
+
   if("formatted_prior" %in% names(stan_args)){
     formatted_prior <- stan_args$formatted_prior
     stan_args$formatted_prior <- NULL
@@ -386,7 +399,7 @@ baggr <- function(data,
     "formatted_prior" = formatted_prior,
     "n_groups" = n_groups,
     "n_parameters" = n_parameters,
-    "effects" = effect,
+    "labels" = label,
     "covariates" = covariates,
     "pooling" = pooling,
     "fit" = fit,
